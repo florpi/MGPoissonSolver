@@ -28,6 +28,7 @@ ax2.scatter(r, residual, s=1, color='black')
 ax2.set_xlabel("distance")
 ax2.set_ylabel("Residual")
 ax2.plot(x,y,"--",linewidth=2,color='coral')
+plt.savefig("results.png")
 plt.show()
 
 
