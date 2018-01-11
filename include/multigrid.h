@@ -5,23 +5,22 @@
 #include "iostream"
 #include "vector"
 #include "vector3d.cpp"
-
+#include "particle.h"
 class Multigrid{
 	private:
+		double h;
+		const int MAXGRID;
 		int gridlevel;
 		int currentstep;
 		int maxlevel;
-		double h;
-		int MAXGRID;
 
 	public:
 	vector3d<double> left;
 	vector3d<double> right;
 	vector3d<double> residual;
 	
-Multigrid(int gridlevel, int currentstep,
-				int maxlevel, double h, int MAXGRID);
-	void Initial_conditions(vector3d<double> left, vector3d<double> right, vector3d<double> residual);
+	Multigrid(int maxlevel, double h, const int MAXGRID);
+	void Initial_conditions(vector2d<double> rhs );
 
 	int get_currentstep();
 	void restrict(vector3d<double> &aux); // restricts a given quantity to a finer grid via interpolation

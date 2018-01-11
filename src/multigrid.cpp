@@ -1,6 +1,5 @@
 #include "multigrid.h"
 using namespace std;
-//TODO: i) Sparse matrix
 
 #define TOL 1.e-7
 int n=0;
@@ -13,27 +12,24 @@ void print(vector3d<double> &matrix, int rows, int cols, int gridlevel){
 	cout<<endl;
 	}
 }
-Multigrid::Multigrid(int gl, int cs, int ml,
-	   	double h, int maxg):
+Multigrid::Multigrid( int ml, double h, const int mg):
 
-	gridlevel(gl),
-	currentstep(cs),
-	maxlevel(ml),
+	MAXGRID(mg),
 	h(h),
-	MAXGRID(maxg),
-	left(ml,maxg,maxg),
-	right(ml,maxg,maxg),
-	residual(ml,maxg,maxg)
+	gridlevel(0),
+	currentstep(1),
+	maxlevel(ml),
+	left(ml,mg,mg),
+	right(ml,mg,mg),
+	residual(ml,mg,mg)
 	{}	
 
 
-void Multigrid::Initial_conditions(vector3d<double> l, vector3d<double> r, vector3d<double> res)
+void Multigrid::Initial_conditions(vector2d<double> r )
 {
-		for(int i=0; i<this->MAXGRID; i++)
-			for(int j=0; j<this->MAXGRID;j++){
-				this->left(0,i,j) = l(0,i,j);
-				this->right(0,i,j) = r(0,i,j);
-				this->residual(0,i,j) = res(0,i,j);
+		for(int i=0; i<MAXGRID; i++)
+			for(int j=0; j<MAXGRID;j++){
+				this->right(0,i,j) = r(i,j);
 			}
 			
 }

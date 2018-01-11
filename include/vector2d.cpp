@@ -22,12 +22,3 @@ private:
 	vector<T> data;
 };
 
-/*
-int main(){
-
-	vector3d <double>  vec(3,3,3);
-	vec(0,0,0) = 1.5;
-	cout << vec(0,0,0) << endl;
-	return 0;
-}
-*/

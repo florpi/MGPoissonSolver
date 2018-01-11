@@ -4,10 +4,10 @@ CFLAGS=-I$(IDIR)
 
 ODIR=obj
 
-_DEPS=main.h force.h potential.h multigrid.h particle.h 
+_DEPS=main.h grid.h multigrid.h particle.h 
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ =main.o force.o potential.o multigrid.o particle.o 
+_OBJ =main.o grid.o multigrid.o particle.o 
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: %.cpp $(DEPS)
