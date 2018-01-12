@@ -2,8 +2,6 @@
 #define multigrid_H 
 
 #include <math.h>
-#include "iostream"
-#include "vector"
 #include "vector3d.cpp"
 #include "particle.h"
 class Multigrid{
@@ -11,15 +9,16 @@ class Multigrid{
 		double h;
 		const int MAXGRID;
 		int gridlevel;
+		int n;
 		int currentstep;
-		int maxlevel;
+		const int maxlevel;
 
 	public:
 	vector3d<double> left;
 	vector3d<double> right;
 	vector3d<double> residual;
 	
-	Multigrid(int maxlevel, double h, const int MAXGRID);
+	Multigrid(const int maxlevel, double h, const int MAXGRID);
 	void Initial_conditions(vector2d<double> rhs );
 
 	int get_currentstep();

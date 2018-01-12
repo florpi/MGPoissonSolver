@@ -1,23 +1,15 @@
 #include "multigrid.h"
 using namespace std;
 
-#define TOL 1.e-7
-int n=0;
-void print(vector3d<double> &matrix, int rows, int cols, int gridlevel){
-	for(int r=0; r<rows; r++){
-		for(int c=0; c<cols;c++)
-		{
-			cout << matrix(gridlevel,r,c)<<" ";
-		}
-	cout<<endl;
-	}
-}
-Multigrid::Multigrid( int ml, double h, const int mg):
+#define TOL 0.0003 
+
+Multigrid::Multigrid( const int ml, double h, const int mg):
 
 	MAXGRID(mg),
 	h(h),
 	gridlevel(0),
 	currentstep(1),
+	n(0), // number of iterations carried
 	maxlevel(ml),
 	left(ml,mg,mg),
 	right(ml,mg,mg),
@@ -27,8 +19,8 @@ Multigrid::Multigrid( int ml, double h, const int mg):
 
 void Multigrid::Initial_conditions(vector2d<double> r )
 {
-		for(int i=0; i<MAXGRID; i++)
-			for(int j=0; j<MAXGRID;j++){
+		for(int i=0; i<MAXGRID; ++i)
+			for(int j=0; j<MAXGRID;++j){
 				this->right(0,i,j) = r(i,j);
 			}
 			
@@ -129,13 +121,13 @@ void Multigrid::gauss(int n_iters)
 					change = fabs(left(gridlevel,i,j)/leftold -1.);
 					if (change > maxChange) maxChange = change;
 					if (maxChange < TOL && k>10 ) {
-						cout << "Converged after " << k << " iterations." <<endl;
+						cout << "Converged after " << k << " iterations." << "\n" ;
 						return;
 					}
 					}
 			}
 	}
-	cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << maxChange << endl;
+	cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << maxChange << "\n";
 }
 
 void Multigrid::compute_residual(){
@@ -171,7 +163,7 @@ void Multigrid::vcycle(int n_iters){
 		compute_residual();
 		restrict(residual); // +1 gridlevel
 
-		cout << ">>>>> GRIDLEVEL  = " << gridlevel << endl; 
+		cout << ">>>>> GRIDLEVEL  = " << gridlevel << "\n"; 
 		for(int i=0; i<MAXGRID;i+= currentstep)
 		   for(int j=0; j<MAXGRID; j+= currentstep){
 				right(gridlevel,i,j) = residual(gridlevel-1,i,j); // Right hand side of current level is the restricted residual of previous level
@@ -187,7 +179,8 @@ void Multigrid::vcycle(int n_iters){
 		
 //		print(left, MAXGRID, MAXGRID, gridlevel);
 		prolong(left); // -1 gridlevel
-
+		cout << ">>>>> GRIDLEVEL  = " << gridlevel << "\n"; 
+		
 		for(int i=0; i<MAXGRID;i+= currentstep)
 		   for(int j=0; j<MAXGRID; j+= currentstep)
 		   {
@@ -201,20 +194,3 @@ void Multigrid::vcycle(int n_iters){
 	}
 
 }
-/*
-int main(){
-	int gridlevel=1;
-	int currentstep = 0.;
-	int maxlevel=2;
-	double h=0.;
-	int MAXGRID=3; 
-	vector3d<double> left(maxlevel,MAXGRID,MAXGRID);
-	vector3d<double> right(maxlevel,MAXGRID,MAXGRID);
-	vector3d<double> residual(maxlevel,MAXGRID,MAXGRID);
-	left(0,0,0)=1.2;
-	cout<<left(0,0,0)<<endl;
-	Multigrid mg(gridlevel,currentstep,maxlevel,h,MAXGRID);
-	mg.Initial_conditions(left,right,residual);
-	cout<<mg.left(0,0,0)<<endl;
-
-}*/

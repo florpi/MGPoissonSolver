@@ -1,11 +1,12 @@
 #ifndef particle_H
 #define particle_H
 
-#include <list>
 #include <vector>
 #include "vector2d.cpp"
 
-class Particle{
+class Grid;
+
+class Particle{ 
   private:
     double mass;
     double pos[2];
@@ -13,7 +14,7 @@ class Particle{
   public:
     Particle(double mass, double pos_x, double pos_y);
     double position(const size_t & i);
-	void compute_acceleration(int MAXGRID, double h,vector2d<double> fx, vector2d<double> fy);
+	void compute_acceleration(Grid &gr);
 	double get_acceleration();
 };
 #endif

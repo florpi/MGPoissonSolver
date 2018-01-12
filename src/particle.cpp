@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "iostream"
+#include  "grid.h"
 
 Particle::Particle(double mass, double pos_x, double pos_y):
   mass(mass)
@@ -14,11 +15,11 @@ double Particle::position(const size_t & i){
   return pos[i];
 }
 
-void Particle::compute_acceleration(int MAXGRID, double h,vector2d<double> fx, vector2d<double> fy){
+void Particle::compute_acceleration(Grid &gr){
 	int i,j;
-	double xx = position(0)/h;
+	double xx = position(0)/gr.h;
 	i = (int) xx;
-	double yy = position(1)/h;
+	double yy = position(1)/gr.h;
 	j = (int) yy;
 
 	double u, v, ax, ay, a;
@@ -26,14 +27,14 @@ void Particle::compute_acceleration(int MAXGRID, double h,vector2d<double> fx, v
 	v = yy-j;
 
 	int ii = i +1;
-	if (ii>=MAXGRID)
+	if (ii>=gr.MAXGRID)
 		ii = 0;
 	int jj = j + 1;
-	if (jj>=MAXGRID)
+	if (jj>=gr.MAXGRID)
 		jj = 0;
-	ax = fx(i,j) * (1-u)*(1-v) + fx(ii,j)*u*(1-v) +	fx(i,jj)*v*(1-u) + fx(ii,jj)*u*v;
-	ay = fy(i,j)*(1-v)*(1-u)+ fy(ii,j)*u*(1-v) +
-		fy (i,jj)*v*(1-u) + fy(ii,jj)*u*v;
+	ax = gr.fx(i,j) * (1-u)*(1-v) + gr.fx(ii,j)*u*(1-v) +	gr.fx(i,jj)*v*(1-u) + gr.fx(ii,jj)*u*v;
+	ay = gr.fy(i,j)*(1-v)*(1-u)+ gr.fy(ii,j)*u*(1-v) +
+		gr.fy (i,jj)*v*(1-u) + gr.fy(ii,jj)*u*v;
 	this->acc=sqrt(ax*ax + ay*ay);
 }
 double Particle::get_acceleration(){
