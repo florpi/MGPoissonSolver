@@ -2,6 +2,7 @@
 #define multigrid_H 
 
 #include <math.h>
+#include <omp.h>
 #include "vector3d.cpp"
 #include "particle.h"
 class Multigrid{

@@ -108,26 +108,52 @@ void Multigrid::gauss(int n_iters)
 	double maxChange;
 	double change;
 	double leftold;
+	omp_set_dynamic(0); 
 	for(int k=0;k<n_iters;k++){
-	maxChange = 0.0;
-			for(int i=0; i<MAXGRID; i+=currentstep){
+		maxChange = 0.0;
+		bool cancel = false;
+		#pragma omp parallel for schedule(static) num_threads(4)
+		for(int i=0; i<MAXGRID; i+=currentstep){
 				for(int j=0; j<MAXGRID; j+=currentstep){
-					
-					boundary = applyBC(i,j, currentstep,MAXGRID);		
-					leftold = left(gridlevel,i,j);
-					left(gridlevel,i,j) = 0.25*(left(gridlevel,boundary[0],j) + left(gridlevel,boundary[1],j)
-							+ left(gridlevel,i,boundary[2]) + left(gridlevel,i,boundary[3]) 
-							- h*h*right(gridlevel,i,j));
-					change = fabs(left(gridlevel,i,j)/leftold -1.);
-					if (change > maxChange) maxChange = change;
-					if (maxChange < TOL && k>10 ) {
-						cout << "Converged after " << k << " iterations." << "\n" ;
-						return;
+					if((i+j)%2==0){	
+
+						boundary = applyBC(i,j, currentstep,MAXGRID);		
+						leftold = left(gridlevel,i,j);
+						left(gridlevel,i,j) = 0.25*(left(gridlevel,boundary[0],j) + left(gridlevel,boundary[1],j)
+								+ left(gridlevel,i,boundary[2]) + left(gridlevel,i,boundary[3]) 
+								- h*h*right(gridlevel,i,j));
+						change = fabs(left(gridlevel,i,j)/leftold -1.);
+						if (change > maxChange) maxChange = change;
+						if (maxChange < TOL && k>10 ) {
+							cout << "Black converged after " << k << " iterations." << "\n" ;
+							cancel=true;
+						}
 					}
+				}
+			}
+	
+//		cout << "Black Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << maxChange << "\n";
+		#pragma omp parallel for schedule(static) num_threads(4)
+		for(int i=0; i<MAXGRID; i+=currentstep){
+				for(int j=0; j<MAXGRID; j+=currentstep){
+					if((i+j)%2==1){	
+						boundary = applyBC(i,j, currentstep,MAXGRID);		
+						leftold = left(gridlevel,i,j);
+						left(gridlevel,i,j) = 0.25*(left(gridlevel,boundary[0],j) + left(gridlevel,boundary[1],j)
+								+ left(gridlevel,i,boundary[2]) + left(gridlevel,i,boundary[3]) 
+								- h*h*right(gridlevel,i,j));
+						change = fabs(left(gridlevel,i,j)/leftold -1.);
+						if (change > maxChange) maxChange = change;
+						if (maxChange < TOL && k>10 ) {
+							cout << "Red converged after " << k << " iterations." << "\n" ;
+							cancel=true;
+						}
 					}
+				}
 			}
 	}
 	cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << maxChange << "\n";
+
 }
 
 void Multigrid::compute_residual(){
