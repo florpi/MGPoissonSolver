@@ -7,17 +7,20 @@ class Grid{
 	private:
 		const double L; // Lenght of the box to simulate
 		const double G; // Gravitational constant, default set to 1.
+		int step;
 		vector<Particle> particles;
-		vector2d<double> rho; // density 
-		vector2d<double> phi;// potential
-	
-	public:
 
-		const int  MAXGRID; // Grid size
+	public:
+		vector2d<double> rhs; // density 
+		vector2d<double> lhs;// potential
+		vector2d<double> residual;
+		vector2d<double> error;
+
+		int  MAXGRID; // Grid size
 		const double h; // Cell separation 
 		vector2d<double> fx; // force, x component
 		vector2d<double> fy; // force, y component
-		Grid(const int MAXNPART, const double L );
+		Grid(int MAXNPART, const double L );
 		void add_particle(Particle part);
 		void compute_density(); // Assigns density to the grid using CIC 
 		double get_density(int, int);

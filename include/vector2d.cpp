@@ -16,9 +16,22 @@ public:
     T const & operator()(size_t i, size_t j) const {
         return data[i*d1 + j];
     }
+	void print();
 
 private:
 	size_t d1,d2;
 	vector<T> data;
 };
 
+template <class T>
+void vector2d<T>::print()
+{
+	for (size_t r = 0; r < d1; ++r)
+	{
+		for (size_t c = 0; c < d2; ++c)
+		{
+			cout << data[ (r*d1) + c ] << " ";
+		}
+		cout << endl;
+	}
+}

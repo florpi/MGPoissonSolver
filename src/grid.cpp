@@ -1,13 +1,16 @@
 #include "grid.h"
 //TODO: particles.reserve(MAXNPART), donde?
 
-Grid::Grid( const int MAXGRID, const double L):
+Grid::Grid( int MAXGRID, const double L):
 	MAXGRID(MAXGRID),
 	L(L),
 	h(L/MAXGRID), 
 	G(1.),
-	rho(MAXGRID,MAXGRID),
-	phi(MAXGRID,MAXGRID),
+	step(1),
+	rhs(MAXGRID,MAXGRID),
+	lhs(MAXGRID,MAXGRID),
+	residual(MAXGRID,MAXGRID),
+	error(MAXGRID,MAXGRID),
 	fx(MAXGRID,MAXGRID),
 	fy(MAXGRID,MAXGRID)
 	{}
@@ -36,32 +39,33 @@ void Grid::compute_density(){
 		if(jj >= MAXGRID)
 		jj=0;
 
-		this->rho(i,j) += 4*M_PI*G*(1-u)*(1-v)/(h * h);
-		this->rho(ii,j) += 4*M_PI*G*(u)*(1-v)/(h*h);;
-		this->rho(i,jj) += 4*M_PI*G*v * (1-u)/(h*h); 
-		this->rho(ii,jj) += 4*M_PI*G*u*v/(h*h);
+		this->rhs(i,j) += 4*M_PI*G*(1-u)*(1-v)/(h * h);
+		this->rhs(ii,j) += 4*M_PI*G*(u)*(1-v)/(h*h);;
+		this->rhs(i,jj) += 4*M_PI*G*v * (1-u)/(h*h); 
+		this->rhs(ii,jj) += 4*M_PI*G*u*v/(h*h);
+		cout << "aqui" << endl;
 	}
 }
 
 double Grid::get_density(int i, int j){
-	return this->rho(i,j);
+	return this->rhs(i,j);
 }
 
 void Grid::compute_force(){
-	Multigrid mg(4,h, MAXGRID);
-	mg.Initial_conditions(rho);
+	Multigrid mg(4, MAXGRID,1);
+	mg.Initial_conditions(0.23,0.45);
 	mg.result(100);
 	for( int i=0; i<MAXGRID;++i)
 		for(int j=0; j<MAXGRID;++j){
-			phi(i,j) = mg.left(0,i,j);
+			lhs(i,j) = mg.grids[0].lhs(i,j);
 	}
 	vector<int> boundary;
 	for( int i=0; i<MAXGRID;++i)
 		for(int j=0; j<MAXGRID;++j)
 		{
-		 	boundary = applyBC(i,j,1,MAXGRID);	
-			fx(i,j) = -(phi(boundary[1],j) - phi(boundary[0],j)) /(2.*h);
-			fy(i,j) = - (phi(i,boundary[3]) - phi(i,boundary[2]))/(2.*h);
+		 	boundary = applyBC(i,j,MAXGRID);	
+			fx(i,j) = -(lhs(boundary[1],j) - lhs(boundary[0],j)) /(2.*h);
+			fy(i,j) = - (lhs(i,boundary[3]) - lhs(i,boundary[2]))/(2.*h);
 		}
 }
 
