@@ -1,33 +1,25 @@
 #include "multigrid.h"
 using namespace std;
 
+//TODO: mirar prolong
+//		arreglar parallel
+//
 #define TOL 0.0003 
 
-Multigrid::Multigrid( const int ml, const int mg,const int n_particles):
+Multigrid::Multigrid( const int ml):
 
-	MAXGRID(mg),
-	h(1./mg),
 	gridlevel(0),
-	currentstep(1),
 	n(0), // number of iterations carried
-	n_particles(n_particles),
 	maxlevel(ml)
 	{}	
 
 
 
-void Multigrid::Initial_conditions(double posx, double posy)
+void Multigrid::Initial_conditions(Grid mother)
 {
-		Grid gr(MAXGRID, 1.);
-		grids.push_back(gr);
-		for(int p=0; p<n_particles; ++p){
-			Particle part(1.,posx,posy);
-			grids[0].add_particle(part);
-		}
-		grids[0].compute_density();
-		cout << "esto va" << endl;
+		grids.push_back(mother);
 		for(int k=1; k<maxlevel; ++k){
-			int new_grid = MAXGRID / (2*k);
+			int new_grid = mother.MAXGRID / (2*k);
 			Grid gr(new_grid, 1.);
 			grids.push_back(gr);
 		}
@@ -57,9 +49,28 @@ vector<int> applyBC(int i, int j, int MAXGRID)
 	return boundary;
 
 }
-int Multigrid::get_currentstep()
+vector<int> applyBC_doublestep(int i, int j, int MAXGRID)
 {
-	return this->currentstep;
+	int im, ip, jm, jp;
+	im = i - 2;
+	ip = i + 2;
+	jm = j - 2;
+	jp = j + 2;
+	if(im<0){
+		im += MAXGRID;
+	}
+	if(ip>MAXGRID-1){
+		ip -= MAXGRID;
+	   } 
+	if(jm<0){
+		jm += MAXGRID;
+	}
+	if(jp>MAXGRID-1){
+		jp -= MAXGRID;
+	}
+	vector<int> boundary{im, ip, jm, jp};
+	return boundary;
+
 }
 void Multigrid::restrict()
 {
@@ -108,37 +119,138 @@ void Multigrid::prolong()
 	}	
 
 
-gridlevel -=1;
+	gridlevel -=1;
 }
-
 void Multigrid::gauss(int n_iters)
 {
-	vector<int> boundary;
-	double maxChange;
+	int i,j;
 	double change;
 	double leftold;
-	omp_set_dynamic(0);
-	for(int k=0;k<n_iters;k++){
-	maxChange = 0.0;
-	bool cancel = false;
-	#pragma omp parallel for schedule(static) num_threads(4)
-			for(int i=0; i<grids[gridlevel].MAXGRID; ++i){
-				for(int j=0; j<grids[gridlevel].MAXGRID; ++j){
-					
-					boundary = applyBC(i,j, grids[gridlevel].MAXGRID);		
+	int iter = 0;
+	double maxChange= 2*TOL;
+	while (maxChange > TOL && iter < n_iters){
+		maxChange = 0.;
+		for(i=0; i<grids[gridlevel].MAXGRID; ++i){
+			for(j = 0; j<grids[gridlevel].MAXGRID ; ++j){
 					leftold = grids[gridlevel].lhs(i,j);
-					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(boundary[0],j) + grids[gridlevel].lhs(boundary[1],j)
-							+ grids[gridlevel].lhs(i,boundary[2])+ grids[gridlevel].lhs(i,boundary[3])
-							- h*h*grids[gridlevel].rhs(i,j));
-					change = fabs(grids[gridlevel].lhs(i,j)/leftold -1.);
-					if (change > maxChange) maxChange = change;
-					if (maxChange < TOL && k>10 ) {
-						cout << "Converged after " << k << " iterations." << "\n" ;
-						return;
+					int im = i - 1;
+					int ip = i + 1;
+					int jm = j - 1;
+					int jp = j + 1;	
+					if(im<0){
+						im = grids[gridlevel].MAXGRID -1;
 					}
-					} }
+					if(ip>grids[gridlevel].MAXGRID-1){
+						ip = 0;
+					}
+					if(jm<0){
+						jm = grids[gridlevel].MAXGRID -1;
+					}
+					if(jp>grids[gridlevel].MAXGRID - 1){
+						jp = 0;
+					}
+					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(im,j) + grids[gridlevel].lhs(ip,j)
+							+ grids[gridlevel].lhs(i,jm)+ grids[gridlevel].lhs(i,jp)
+							- grids[gridlevel].h*grids[gridlevel].h*grids[gridlevel].rhs(i,j));
+					change = fabs(grids[gridlevel].lhs(i,j)/leftold -1.);
+
+					if (change > maxChange) maxChange = change;
+					} 
 	}
-	cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << maxChange << "\n";
+
+	iter += 1;
+}
+cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << maxChange << "\n";
+	
+}
+
+
+void Multigrid::gauss_omp(int n_iters)
+{
+	int i,j;
+	double maxChangeB, maxChangeR, maxChange;
+	double change;
+	double leftold;
+	int iter = 0;
+	double diff = 1.1*TOL;
+	cout << " Starting gauss .... " << endl;
+	while (diff > TOL && iter < n_iters){
+		diff = 0.;
+		#pragma omp parallel private(j, maxChange, maxChangeR, maxChangeB)
+		{
+		maxChangeB = 0.;
+		#pragma omp for schedule(static) 
+			for(i=0; i<grids[gridlevel].MAXGRID; ++i){
+				for(j = i%2; j<grids[gridlevel].MAXGRID - (i+1)%2; j+=2){
+					leftold = grids[gridlevel].lhs(i,j);
+					int im = i -2;
+					int ip = i + 2;
+					int jm = j - 2;
+					int jp = j + 2;	
+					if(im<0){
+						im = grids[gridlevel].MAXGRID -1;
+					}
+					if(ip>grids[gridlevel].MAXGRID-1){
+						ip = 0;
+					}
+					if(jm<0){
+						jm = grids[gridlevel].MAXGRID -1;
+					}
+					if(jp>grids[gridlevel].MAXGRID-1){
+						jp = 0;
+					}
+					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(im,j) + grids[gridlevel].lhs(ip,j)
+							+ grids[gridlevel].lhs(i,jm)+ grids[gridlevel].lhs(i,jp)
+							- 4*grids[gridlevel].h*grids[gridlevel].h*grids[gridlevel].rhs(i,j));
+					change = fabs(grids[gridlevel].lhs(i,j)/leftold -1.);
+
+					if (change > maxChangeB) maxChangeB = change;
+					} 
+	}
+		maxChangeR = 0.;
+	#pragma omp for schedule(static) nowait
+
+			for(int i=0; i<grids[gridlevel].MAXGRID; ++i){
+				for(int j= (i+1)%2; j<grids[gridlevel].MAXGRID-i%2; j+=2){
+					
+					leftold = grids[gridlevel].lhs(i,j);
+					int im = i -2;
+					int ip = i + 2;
+					int jm = j - 2;
+					int jp = j + 2;	
+					if(im<0){
+						im = grids[gridlevel].MAXGRID -1;
+					}
+					if(ip>grids[gridlevel].MAXGRID-1){
+						ip = 0;
+					}
+					if(jm<0){
+						jm = grids[gridlevel].MAXGRID -1;
+					}
+					if(jp>grids[gridlevel].MAXGRID-1){
+						jp = 0;
+					}
+					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(im,j) + grids[gridlevel].lhs(ip,j)
+							+ grids[gridlevel].lhs(i,jm)+ grids[gridlevel].lhs(i,jp)
+							- grids[gridlevel].h*grids[gridlevel].h*grids[gridlevel].rhs(i,j));
+	
+
+					change = fabs(grids[gridlevel].lhs(i,j)/leftold -1.);
+					if (change > maxChangeR) maxChangeR = change;
+					}
+	}
+	maxChange = maxChangeB < maxChangeR ? maxChangeR : maxChangeB;
+	#pragma omp barrier
+	if(diff < maxChange)
+	#pragma omp atomic write
+		diff = maxChange;
+	} // Ends parallelisation
+
+
+	iter += 1;
+}
+cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << diff << "\n";
+	
 }
 
 void Multigrid::compute_residual(){
@@ -147,7 +259,7 @@ void Multigrid::compute_residual(){
 	for(int i=0; i<grids[gridlevel].MAXGRID; ++i)
 		for(int j=0; j<grids[gridlevel].MAXGRID;++j){
 			boundary = applyBC(i,j, grids[gridlevel].MAXGRID);
-			ddleft(i,j) = 1./h/h * (grids[gridlevel].lhs(boundary[0],j) + grids[gridlevel].lhs(boundary[1],j) 
+			ddleft(i,j) = 1./grids[gridlevel].h/grids[gridlevel].h * (grids[gridlevel].lhs(boundary[0],j) + grids[gridlevel].lhs(boundary[1],j) 
 					+ grids[gridlevel].lhs(i,boundary[2])  
 					+ grids[gridlevel].lhs(i,boundary[3]) 
 					- 4.*grids[gridlevel].lhs(i,j));
@@ -159,7 +271,7 @@ void Multigrid::compute_residual(){
 
 void Multigrid::result(int n_iters0){
 
-	gauss(10); // First initial guess for level 0 (finest grid(
+	gauss_omp(10); // First initial guess for level 0 (finest grid(
 	
 	vcycle(n_iters0);
 }
@@ -168,6 +280,7 @@ void Multigrid::vcycle(int n_iters){
 	if(maxlevel -1  > n){
 
 		compute_residual();
+
 		restrict(); // +1 gridlevel
 		cout << ">>>>> GRIDLEVEL  = " << gridlevel << "\n"; 
 		gauss(n_iters); // Improves error on current level

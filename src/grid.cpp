@@ -43,7 +43,6 @@ void Grid::compute_density(){
 		this->rhs(ii,j) += 4*M_PI*G*(u)*(1-v)/(h*h);;
 		this->rhs(i,jj) += 4*M_PI*G*v * (1-u)/(h*h); 
 		this->rhs(ii,jj) += 4*M_PI*G*u*v/(h*h);
-		cout << "aqui" << endl;
 	}
 }
 
@@ -52,13 +51,6 @@ double Grid::get_density(int i, int j){
 }
 
 void Grid::compute_force(){
-	Multigrid mg(4, MAXGRID,1);
-	mg.Initial_conditions(0.23,0.45);
-	mg.result(100);
-	for( int i=0; i<MAXGRID;++i)
-		for(int j=0; j<MAXGRID;++j){
-			lhs(i,j) = mg.grids[0].lhs(i,j);
-	}
 	vector<int> boundary;
 	for( int i=0; i<MAXGRID;++i)
 		for(int j=0; j<MAXGRID;++j)

@@ -20,17 +20,28 @@ int main(){
 	// Define grid :
    	Grid mother(NGRID,L);
 
+
 	// Define initial particle(s) parameters
 	// and add them to the grid (in this case only one
 	// since we one to check the force of an individual particle)
 	n_particles = 1;
-	//posx = random(1.);
-	//posy = random(1.);;
-	posx = 0.23;
-	posy = 0.45;
+	posx = random(1.);
+	posy = random(1.);;
+	Particle part(1.,posx,posy);
+	mother.add_particle(part);
+	mother.compute_density();
+	Multigrid mg(8);
+	mg.Initial_conditions(mother);
+	mg.result(100);
+	for( int i=0; i<NGRID;++i)
+		for(int j=0; j<NGRID;++j){
+			mother.lhs(i,j) = mg.grids[0].lhs(i,j);
+	}
+	mother.compute_force();
+	
 	
 	//gr.compute_density();
-	mother.compute_force();
+	//mother.compute_force();
 
 	// Generate test particles to compute the acceleration they suffer
 	// due to grid particles

@@ -7,7 +7,7 @@
 #include <fstream>
 
 // Default grid parameters
-const int NGRID=256; // Number of cells
+const int NGRID= 256*20; // Number of cells
 const double L = 1.; // Simulation box length (periodic boundary conditions will be applied)
 double h = L/NGRID; // Cell length
 

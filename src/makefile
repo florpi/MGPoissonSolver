@@ -11,9 +11,9 @@ _OBJ =main.o grid.o multigrid.o particle.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: %.cpp $(DEPS)
-	$(CC) -c -O2 -o $@ $< $(CFLAGS)
+	$(CC) -c -O2 -o $@ $< -fopenmp $(CFLAGS)
 acceleration: $(OBJ)
-	g++  -o $@ $^ $(CFLAGS) 
+	g++  -o $@ $^ -fopenmp $(CFLAGS) 
 
 .PHONY:	clean
 clean:
