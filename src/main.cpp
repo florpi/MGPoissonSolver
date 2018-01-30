@@ -10,8 +10,10 @@ double random(double lim)
 }
 
 
-int main(){
+int main(int argc, char* argv[]){
+
 	ofstream myfile;
+	int paral_flag = atoi(argv[2]);
 	// Define time measures:
 	clock_t t_initial, t_final;
 	float seconds;
@@ -20,32 +22,27 @@ int main(){
 	// Define grid :
    	Grid mother(NGRID,L);
 
-
 	// Define initial particle(s) parameters
 	// and add them to the grid (in this case only one
-	// since we one to check the force of an individual particle)
-	n_particles = 1;
+	// since we want to check the force of an individual particle, let's add only one source particle to the grid
 	posx = random(1.);
 	posy = random(1.);;
 	Particle part(1.,posx,posy);
 	mother.add_particle(part);
 	mother.compute_density();
-	Multigrid mg(8);
+	// Generate multiple grids 
+	Multigrid mg(n_grids);
 	mg.Initial_conditions(mother);
-	mg.result(100);
+	mg.vcycle(n_iters_per_grid, paral_flag);
 	for( int i=0; i<NGRID;++i)
 		for(int j=0; j<NGRID;++j){
 			mother.lhs(i,j) = mg.grids[0].lhs(i,j);
 	}
+	// Compute force in initial grid
 	mother.compute_force();
 	
-	
-	//gr.compute_density();
-	//mother.compute_force();
-
 	// Generate test particles to compute the acceleration they suffer
 	// due to grid particles
-	int n_test = 1000;
 	double acc, rmin, rmax, p, angle, r,alpha,xs,ys,dx,dy;
 	// Save them in file
 	myfile.open("../results/acceleration" + to_string(NGRID) + ".txt");

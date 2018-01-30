@@ -11,11 +11,13 @@ Particle::Particle(double mass, double pos_x, double pos_y):
   }
 
 double Particle::position(const size_t & i){
+  /* Returns private variable pos outside the class */
   if (i!=0 && i!=1) exit(1);
   return pos[i];
 }
 
 void Particle::compute_acceleration(Grid &gr){
+	/* Computes acceleration inverting the CIC mass assignment */
 	int i,j;
 	double xx = position(0)/gr.h;
 	i = (int) xx;
@@ -38,5 +40,6 @@ void Particle::compute_acceleration(Grid &gr){
 	this->acc=sqrt(ax*ax + ay*ay);
 }
 double Particle::get_acceleration(){
+	/* Returns private variable acceleration outside the class */
 	return this->acc;
 }

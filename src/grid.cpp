@@ -16,10 +16,12 @@ Grid::Grid( int MAXGRID, const double L):
 	{}
 
 void Grid::add_particle(Particle part){
+	/* Adds particle part to given grid */
 	particles.push_back(part);
 }
 
 void Grid::compute_density(){
+	/* Computes grid density using CIC mass assignment*/
 	for(int p=0; p < particles.size(); ++p){	
 		int i, ii, j, jj; 
 		double xx = particles[p].position(0)/h;
@@ -47,10 +49,12 @@ void Grid::compute_density(){
 }
 
 double Grid::get_density(int i, int j){
+	/* Obtains private variable density outside the class*/
 	return this->rhs(i,j);
 }
 
 void Grid::compute_force(){
+	/* Computes force on grid */
 	vector<int> boundary;
 	for( int i=0; i<MAXGRID;++i)
 		for(int j=0; j<MAXGRID;++j)
@@ -62,9 +66,11 @@ void Grid::compute_force(){
 }
 
 vector2d<double> Grid::get_fx(){
+	/* Obtains private variable fx outside the class*/
 	return this->fx;
 }
 vector2d<double> Grid::get_fy(){
+	/* Obtains private variable fy outside the class*/
 	return this->fy;
 }
 

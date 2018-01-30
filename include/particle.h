@@ -1,7 +1,6 @@
 #ifndef particle_H
 #define particle_H
 
-#include <vector>
 #include "vector2d.cpp"
 
 class Grid;

@@ -8,34 +8,22 @@
 #include "omp.h"
 class Multigrid{
 	private:
-		int gridlevel;
-		int n;
-		int currentstep;
-		const int maxlevel;
+		int gridlevel; // Current grid, Each grid has different cell size
+		int n; 
+		const int maxlevel; // Last grid
 
 	public:
-	vector3d<double> left;
-	vector3d<double> right;
-	vector3d<double> residual;
-	
-	vector<Grid> grids;
-	Multigrid(const int maxlevel);
-	void Initial_conditions(Grid mother);
-
-	int get_currentstep();
-	void restrict(); // restricts a given quantity to a finer grid via interpolation
+		Multigrid(const int maxlevel);
+		vector<Grid> grids; // array of grids with different sizes
+		void Initial_conditions(Grid mother); // generates initial array of grids 
+		void restrict(); // restricts a given quantity to a finer grid via interpolation
 		void prolong();// prolongs a given quantity to a coarser grid via interpolation
 		void gauss(int n_iters); // Performs n_iters gauss_seidel steps
-		void gauss_omp(int n_iters); // Performs n_iters gauss_seidel steps
+		void gauss_omp(int n_iters); // Performs n_iters gauss_seidel steps with parallel red black ordering
 		void compute_residual();
-		void result(int n_iters0);
-		void vcycle(int n_iters);
-		//vector3d<double> get_left();
+		void vcycle(int n_iters, int paral);
 
 };
 vector<int> applyBC(int i, int j, int MAXGRID); // Applies periodic boundary conditions
-vector<int> applyBC_doublestep(int i, int j, int MAXGRID); // Applies periodic boundary conditions
 
-
-void print(vector3d<double> &matrix, int, int, int);
 #endif

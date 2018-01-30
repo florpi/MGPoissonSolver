@@ -1,12 +1,9 @@
 #include "multigrid.h"
 using namespace std;
 
-//TODO: mirar prolong
-//		arreglar parallel
-//
-#define TOL 0.0003 
+#define TOL 0.0001
 
-Multigrid::Multigrid( const int ml):
+Multigrid::Multigrid(const int ml):
 
 	gridlevel(0),
 	n(0), // number of iterations carried
@@ -15,8 +12,8 @@ Multigrid::Multigrid( const int ml):
 
 
 
-void Multigrid::Initial_conditions(Grid mother)
-{
+void Multigrid::Initial_conditions(Grid mother){
+	/* Sets initial grid and creates bigger cell ones*/
 		grids.push_back(mother);
 		for(int k=1; k<maxlevel; ++k){
 			int new_grid = mother.MAXGRID / (2*k);
@@ -26,8 +23,8 @@ void Multigrid::Initial_conditions(Grid mother)
 		
 }
 
-vector<int> applyBC(int i, int j, int MAXGRID)
-{
+vector<int> applyBC(int i, int j, int MAXGRID){
+	/* Applies periodic boundary conditions */
 	int im, ip, jm, jp;
 	im = i - 1;
 	ip = i + 1;
@@ -49,31 +46,8 @@ vector<int> applyBC(int i, int j, int MAXGRID)
 	return boundary;
 
 }
-vector<int> applyBC_doublestep(int i, int j, int MAXGRID)
-{
-	int im, ip, jm, jp;
-	im = i - 2;
-	ip = i + 2;
-	jm = j - 2;
-	jp = j + 2;
-	if(im<0){
-		im += MAXGRID;
-	}
-	if(ip>MAXGRID-1){
-		ip -= MAXGRID;
-	   } 
-	if(jm<0){
-		jm += MAXGRID;
-	}
-	if(jp>MAXGRID-1){
-		jp -= MAXGRID;
-	}
-	vector<int> boundary{im, ip, jm, jp};
-	return boundary;
-
-}
-void Multigrid::restrict()
-{
+void Multigrid::restrict(){
+	/* Interpolates right hand side to coarser grid */
 	vector<int> boundary;
 	for(int j=0; j<grids[gridlevel+1].MAXGRID; ++j)
 		for(int i=0; i<grids[gridlevel+1].MAXGRID; ++i)
@@ -87,8 +61,8 @@ void Multigrid::restrict()
 	gridlevel += 1;
 }
 
-void Multigrid::prolong()
-{
+void Multigrid::prolong(){
+	/* Interpolates error to thinner grid */ 
 	vector<int> boundary;
 	for(int j=0; j < grids[gridlevel-1].MAXGRID; ++j)
 		for(int i=0; i < grids[gridlevel-1].MAXGRID; ++i){
@@ -155,25 +129,33 @@ void Multigrid::gauss(int n_iters)
 					change = fabs(grids[gridlevel].lhs(i,j)/leftold -1.);
 
 					if (change > maxChange) maxChange = change;
+
 					} 
 	}
-
+	
 	iter += 1;
 }
-cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << maxChange << "\n";
-	
+/*
+if(maxChange < TOL)
+{
+	cout << "Converged after  " << iter << " iterations." << endl;
+}
+else{
+ 	cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << maxChange << "\n";
+}
+*/
+
 }
 
 
-void Multigrid::gauss_omp(int n_iters)
-{
+void Multigrid::gauss_omp(int n_iters){
+	/* Parallel gauss seidel with black red ordering*/
 	int i,j;
 	double maxChangeB, maxChangeR, maxChange;
 	double change;
 	double leftold;
 	int iter = 0;
 	double diff = 1.1*TOL;
-	cout << " Starting gauss .... " << endl;
 	while (diff > TOL && iter < n_iters){
 		diff = 0.;
 		#pragma omp parallel private(j, maxChange, maxChangeR, maxChangeB)
@@ -208,7 +190,7 @@ void Multigrid::gauss_omp(int n_iters)
 					} 
 	}
 		maxChangeR = 0.;
-	#pragma omp for schedule(static) nowait
+	#pragma omp for schedule(static) 
 
 			for(int i=0; i<grids[gridlevel].MAXGRID; ++i){
 				for(int j= (i+1)%2; j<grids[gridlevel].MAXGRID-i%2; j+=2){
@@ -249,11 +231,13 @@ void Multigrid::gauss_omp(int n_iters)
 
 	iter += 1;
 }
-cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << diff << "\n";
+
+//cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << diff << "\n";
 	
 }
 
 void Multigrid::compute_residual(){
+	/* Computes difference between approximated result and real */
 	vector<int> boundary;
 	vector2d<double> ddleft(grids[gridlevel].MAXGRID,grids[gridlevel].MAXGRID);
 	for(int i=0; i<grids[gridlevel].MAXGRID; ++i)
@@ -269,30 +253,34 @@ void Multigrid::compute_residual(){
 }
 			
 
-void Multigrid::result(int n_iters0){
 
-	gauss_omp(10); // First initial guess for level 0 (finest grid(
-	
-	vcycle(n_iters0);
-}
+void Multigrid::vcycle(int n_iters, int paral){
+	/* Solves equation in coarser grids and uses solutions to accelerate convergence in thinner grids*/
+	gauss(10); // First initial guess for level 0 (finest grid)
 
-void Multigrid::vcycle(int n_iters){
 	if(maxlevel -1  > n){
 
 		compute_residual();
 
 		restrict(); // +1 gridlevel
-		cout << ">>>>> GRIDLEVEL  = " << gridlevel << "\n"; 
-		gauss(n_iters); // Improves error on current level
+		//cout << ">>>>> GRIDLEVEL  " << gridlevel << "  >>>>>>"  << "\n"; 
+		switch( paral )
+		{
+			case 0:
+				gauss(n_iters); // Improves error on current level
+				break;
+			case 1:
+				gauss_omp(n_iters);
+				break;
+		}
 		n+=1;
-		vcycle(n_iters);
+		vcycle(n_iters,paral);
 	}
 	else if(this->gridlevel>0)
 	{
 		
-//		print(left, MAXGRID, MAXGRID, gridlevel);
 		prolong(); // -1 gridlevel
-		cout << ">>>>> GRIDLEVEL  = " << gridlevel << "\n"; 
+		//cout << ">>>>> GRIDLEVEL  " << gridlevel << "  >>>>>>>" << "\n"; 
 		for(int i=0; i<grids[gridlevel].MAXGRID; ++i)
 		   for(int j=0; j<grids[gridlevel].MAXGRID; ++j )
 		   {
@@ -300,9 +288,18 @@ void Multigrid::vcycle(int n_iters){
 				grids[gridlevel].lhs(i,j) += grids[gridlevel].error(i,j); 	   
 
 			}
-		gauss(n_iters);
+		switch( paral )
+		{
+			case 0:
+				gauss(n_iters); // Improves error on current level
+				break;
+			case 1:
+				gauss_omp(n_iters);
+				break;
+		}
+	
 	n += 1;
-		vcycle(n_iters);
+		vcycle(n_iters, paral);
 	}
 
 }
