@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib
-matplotlib.rcParams.update({'font.size': 20})
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 
