@@ -27,7 +27,7 @@ $ make
 
 USAGE: 
 
-   ./acceleration   [-p <int>] [-h] 
+   ./acceleration   [-p ] [-h] 
 
 
 Where: 
