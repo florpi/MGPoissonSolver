@@ -1,5 +1,4 @@
 #include "grid.h"
-//TODO: particles.reserve(MAXNPART), donde?
 
 Grid::Grid( int MAXGRID, const double L):
 	MAXGRID(MAXGRID),

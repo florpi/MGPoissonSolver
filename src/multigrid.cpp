@@ -52,11 +52,16 @@ void Multigrid::restrict(){
 	for(int j=0; j<grids[gridlevel+1].MAXGRID; ++j)
 		for(int i=0; i<grids[gridlevel+1].MAXGRID; ++i)
 		{
-		boundary = applyBC(2*i,2*j,grids[gridlevel].MAXGRID);
+			boundary = applyBC(2*i,2*j,grids[gridlevel].MAXGRID);
 			grids[gridlevel+1].rhs(i,j) = 0.25*grids[gridlevel].residual(2*i,2*j) 
-				+ 1./8. * (grids[gridlevel].residual(2*i,boundary[3]) + grids[gridlevel].residual(2*i,boundary[2]) + grids[gridlevel].residual(boundary[1],2*j) + grids[gridlevel].residual(boundary[0],2*j))
-				   + (grids[gridlevel].residual(boundary[1],boundary[3])+grids[gridlevel].residual(boundary[1],boundary[2]) + grids[gridlevel].residual(boundary[0],boundary[3])
-				+ grids[gridlevel].residual(boundary[0],boundary[2]))/16.; 
+										+ 1./8. * (grids[gridlevel].residual(2*i,boundary[3])
+										+ grids[gridlevel].residual(2*i,boundary[2])
+									   	+ grids[gridlevel].residual(boundary[1],2*j)
+									   	+ grids[gridlevel].residual(boundary[0],2*j))
+				   						+ (grids[gridlevel].residual(boundary[1],boundary[3])
+										+ grids[gridlevel].residual(boundary[1],boundary[2]) 
+										+ grids[gridlevel].residual(boundary[0],boundary[3])
+										+ grids[gridlevel].residual(boundary[0],boundary[2]))/16.; 
 		}
 	gridlevel += 1;
 }
@@ -71,11 +76,13 @@ void Multigrid::prolong(){
 				grids[gridlevel-1].error(i,j) = grids[gridlevel].lhs(i/2,j/2); // Direct injection
 			}
 			else if( i%2 == 0 && j%2 == 1){
-				grids[gridlevel-1].error(i,j) = 0.5*(grids[gridlevel].lhs(i/2, j/2) + grids[gridlevel].lhs(i/2,boundary[3]));
+				grids[gridlevel-1].error(i,j) = 0.5*(grids[gridlevel].lhs(i/2, j/2)
+					   							+ grids[gridlevel].lhs(i/2,boundary[3]));
 
 			}
 			else if ( i%2 == 1 && j%2==0){
-				grids[gridlevel-1].error(i,j) = 0.5*(grids[gridlevel].lhs(i/2, j/2) + grids[gridlevel].lhs(boundary[1], j/2));
+				grids[gridlevel-1].error(i,j) = 0.5*(grids[gridlevel].lhs(i/2, j/2)
+					   							+ grids[gridlevel].lhs(boundary[1], j/2));
 			}
 			else if( i%2 == 1 && j%2 == 1){
 				int ip = (i+1)/2;
@@ -86,8 +93,10 @@ void Multigrid::prolong(){
 				if(jp >= grids[gridlevel].MAXGRID){
 					jp = 0;
 				}
-				grids[gridlevel-1].error(i,j) = 0.25*(grids[gridlevel].lhs((i-1)/2 , (j-1)/2) + grids[gridlevel].lhs(ip, (j-1)/2)
-					   							+ grids[gridlevel].lhs((i-1)/2, jp) + grids[gridlevel].lhs(ip,jp));
+				grids[gridlevel-1].error(i,j) = 0.25*(grids[gridlevel].lhs((i-1)/2 , (j-1)/2)
+					   							+ grids[gridlevel].lhs(ip, (j-1)/2)
+					   							+ grids[gridlevel].lhs((i-1)/2, jp)
+											   	+ grids[gridlevel].lhs(ip,jp));
 		
 			}
 	}	
@@ -123,7 +132,8 @@ void Multigrid::gauss(int n_iters)
 					if(jp>grids[gridlevel].MAXGRID - 1){
 						jp = 0;
 					}
-					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(im,j) + grids[gridlevel].lhs(ip,j)
+					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(im,j)
+						   	+ grids[gridlevel].lhs(ip,j)
 							+ grids[gridlevel].lhs(i,jm)+ grids[gridlevel].lhs(i,jp)
 							- grids[gridlevel].h*grids[gridlevel].h*grids[gridlevel].rhs(i,j));
 					change = fabs(grids[gridlevel].lhs(i,j)/leftold -1.);
@@ -181,7 +191,8 @@ void Multigrid::gauss_omp(int n_iters){
 					if(jp>grids[gridlevel].MAXGRID-1){
 						jp = 0;
 					}
-					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(im,j) + grids[gridlevel].lhs(ip,j)
+					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(im,j)
+						   	+ grids[gridlevel].lhs(ip,j)
 							+ grids[gridlevel].lhs(i,jm)+ grids[gridlevel].lhs(i,jp)
 							- 4*grids[gridlevel].h*grids[gridlevel].h*grids[gridlevel].rhs(i,j));
 					change = fabs(grids[gridlevel].lhs(i,j)/leftold -1.);
@@ -212,8 +223,10 @@ void Multigrid::gauss_omp(int n_iters){
 					if(jp>grids[gridlevel].MAXGRID-1){
 						jp = 0;
 					}
-					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(im,j) + grids[gridlevel].lhs(ip,j)
-							+ grids[gridlevel].lhs(i,jm)+ grids[gridlevel].lhs(i,jp)
+					grids[gridlevel].lhs(i,j) = 0.25*(grids[gridlevel].lhs(im,j)
+						   	+ grids[gridlevel].lhs(ip,j)
+							+ grids[gridlevel].lhs(i,jm)
+							+ grids[gridlevel].lhs(i,jp)
 							- grids[gridlevel].h*grids[gridlevel].h*grids[gridlevel].rhs(i,j));
 	
 
@@ -232,7 +245,8 @@ void Multigrid::gauss_omp(int n_iters){
 	iter += 1;
 }
 
-//cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations. The maximum difference is = " << diff << "\n";
+//cout << "Gauss-Seidel did not coverged in " << n_iters << "  iterations.
+//The maximum difference is = " << diff << "\n";
 	
 }
 
@@ -243,7 +257,8 @@ void Multigrid::compute_residual(){
 	for(int i=0; i<grids[gridlevel].MAXGRID; ++i)
 		for(int j=0; j<grids[gridlevel].MAXGRID;++j){
 			boundary = applyBC(i,j, grids[gridlevel].MAXGRID);
-			ddleft(i,j) = 1./grids[gridlevel].h/grids[gridlevel].h * (grids[gridlevel].lhs(boundary[0],j) + grids[gridlevel].lhs(boundary[1],j) 
+			ddleft(i,j) = 1./grids[gridlevel].h/grids[gridlevel].h * (grids[gridlevel].lhs(boundary[0],j)
+				   	+ grids[gridlevel].lhs(boundary[1],j) 
 					+ grids[gridlevel].lhs(i,boundary[2])  
 					+ grids[gridlevel].lhs(i,boundary[3]) 
 					- 4.*grids[gridlevel].lhs(i,j));
