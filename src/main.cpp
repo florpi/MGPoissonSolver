@@ -13,7 +13,12 @@ double random(double lim)
 int main(int argc, char* argv[]){
 
 	ofstream myfile;
-	int paral_flag = atoi(argv[2]);
+	if (argc ==1){
+		paral_flag = 0; // Sequential code activated by default
+	}
+	else{
+		paral_flag = atoi(argv[1]); // 0 means sequential, 1 parallel version
+	}
 	// Define time measures:
 	clock_t t_initial, t_final;
 	float seconds;

@@ -19,4 +19,7 @@ int n_test = 500;  // Number of test particles to compute force
 double posx, posy; // position of source particle
 
 
+int paral_flag; // 0 for sequential gauss-seidel,
+				// 1 for parallel version (blackred ordering)
+
 #endif
