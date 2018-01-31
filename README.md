@@ -24,11 +24,10 @@ $ make
 ```
 ## Usage
 ```console
-Usage: bhg [command flags]
 
 USAGE: 
 
-   ./acceleration[-p <int>] 
+   ./acceleration   [-p <int>] [-h] 
 
 
 Where: 
@@ -36,6 +35,9 @@ Where:
 	0 -> Executes sequential gauss seidel
 	1 -> Executes parallel Black-red gauss seidel
  Default: 0
+
+	-h, --help
+	Displays information 
 ```
 ## Tests
 For a point particle we obtain the following acceleration-distance relation in two dimensions:
