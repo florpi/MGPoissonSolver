@@ -254,7 +254,7 @@ void Multigrid::compute_residual(){
 			
 
 
-void Multigrid::vcycle(int n_iters, int paral){
+void Multigrid::vcycle(int n_iters, bool paral){
 	/* Solves equation in coarser grids and uses solutions to accelerate convergence in thinner grids*/
 	gauss(10); // First initial guess for level 0 (finest grid)
 
@@ -264,14 +264,11 @@ void Multigrid::vcycle(int n_iters, int paral){
 
 		restrict(); // +1 gridlevel
 		//cout << ">>>>> GRIDLEVEL  " << gridlevel << "  >>>>>>"  << "\n"; 
-		switch( paral )
-		{
-			case 0:
-				gauss(n_iters); // Improves error on current level
-				break;
-			case 1:
-				gauss_omp(n_iters);
-				break;
+		if(paral){
+			gauss_omp(n_iters);
+		}
+		else{
+			gauss(n_iters);
 		}
 		n+=1;
 		vcycle(n_iters,paral);
@@ -288,14 +285,11 @@ void Multigrid::vcycle(int n_iters, int paral){
 				grids[gridlevel].lhs(i,j) += grids[gridlevel].error(i,j); 	   
 
 			}
-		switch( paral )
-		{
-			case 0:
-				gauss(n_iters); // Improves error on current level
-				break;
-			case 1:
-				gauss_omp(n_iters);
-				break;
+		if(paral){
+			gauss_omp(n_iters);
+		}
+		else{
+			gauss(n_iters);
 		}
 	
 	n += 1;

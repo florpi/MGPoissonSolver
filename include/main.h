@@ -5,6 +5,7 @@
 #include <random>
 #include <chrono>
 #include <fstream>
+#include <tclap/CmdLine.h>
 
 // Default grid parameters
 const int NGRID= 256; // Number of cells
@@ -19,7 +20,7 @@ int n_test = 500;  // Number of test particles to compute force
 double posx, posy; // position of source particle
 
 
-int paral_flag; // 0 for sequential gauss-seidel,
-				// 1 for parallel version (blackred ordering)
+bool paral_flag; // False for sequential gauss-seidel,
+				// True for parallel version (blackred ordering)
 
 #endif

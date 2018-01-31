@@ -21,7 +21,7 @@ class Multigrid{
 		void gauss(int n_iters); // Performs n_iters gauss_seidel steps
 		void gauss_omp(int n_iters); // Performs n_iters gauss_seidel steps with parallel red black ordering
 		void compute_residual();
-		void vcycle(int n_iters, int paral);
+		void vcycle(int n_iters, bool paral);
 
 };
 vector<int> applyBC(int i, int j, int MAXGRID); // Applies periodic boundary conditions

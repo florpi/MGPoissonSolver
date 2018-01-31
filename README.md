@@ -31,10 +31,9 @@ USAGE:
 
 
 Where: 
-	-p <int>,  --parallel_flag <int>
-		0 -> Executes sequential gauss seidel
-		1 -> Executes parallel Black-red gauss seidel
- 		Default: 0
+	-p <int>,  --parallel_flag 
+		if flagged executes parallel code, if not  executes sequential code.
+ 		Default: False 
 
 	-h, --help
 		Displays information 

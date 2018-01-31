@@ -12,13 +12,12 @@ double random(double lim)
 
 int main(int argc, char* argv[]){
 
+	TCLAP::CmdLine cmd ("Multigrid Poisson Solver",' ',"1.0");
+	TCLAP::SwitchArg paral_tclap("p", "parallel_flag","if flagged executes parallel code, if not  executes sequential code.\n Default: False",cmd,false);
+	cmd.parse(argc,argv);
+	paral_flag = paral_tclap.getValue();
+
 	ofstream myfile;
-	if (argc ==1){
-		paral_flag = 0; // Sequential code activated by default
-	}
-	else{
-		paral_flag = atoi(argv[1]); // 0 means sequential, 1 parallel version
-	}
 	// Define time measures:
 	clock_t t_initial, t_final;
 	float seconds;
