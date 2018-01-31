@@ -41,5 +41,5 @@ Where:
 ```
 ## Tests
 For a point particle we obtain the following acceleration-distance relation in two dimensions:
-![Alt text](results/results.png?raw=true "acceleration")
+![Alt text](results/results.png?raw=true "acceleration"){:height="50%" width="50%"}
 
